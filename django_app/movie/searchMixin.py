@@ -4,6 +4,7 @@ import requests
 from datetime import datetime
 from movie.models import Movie, Actor, Director, StillCut, MovieActorDetail
 from movie.management.commands import crawlingMixin
+from bs4 import BeautifulSoup
 
 
 def search_movie(movie_name):
@@ -61,12 +62,24 @@ def create_movie_list_object(res_dic):
                 for actor in appear_dic["actors"]
                 ]
 
+            # trailer 추가 부분
+            if res_dic["trailer"][0]["link"] != "":
+
+                movie_trailer = res_dic["trailer"][0]["link"]
+                trailer = requests.get(movie_trailer)
+                bs2 = BeautifulSoup(trailer.text, 'html.parser')
+                vid = bs2.select('meta')[4].get('content').split('thumb')
+                if (len(vid) > 1):
+                    vid = vid[1].replace('/', '')
+                    trailer = 'http://videofarm.daum.net/controller/player/VodPlayer.swf?vid={vid}'.format(vid=vid)
+
             movie = Movie(daum_code=daum_code,
                           title=title,
                           genre=genre,
                           story=story,
                           img=movie_img,
-                          nation_code=nation)
+                          nation_code=nation,
+                          trailer=trailer)
             if to_date != "":
                 movie.first_run_date = to_date.date()
             movie.save()
@@ -87,6 +100,8 @@ def create_movie_list_object(res_dic):
                                                        defaults={
                                                            "role": actor["role"]
                                                        })
+
+
         finally:
             return movie
     else:

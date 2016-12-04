@@ -36,6 +36,7 @@ class Movie(models.Model):
     nation_code = models.CharField(max_length=50)
     daum_code = models.CharField(max_length=50,
                                  unique=True)
+    trailer = models.URLField(blank=True)
 
     def __str__(self):
         return self.title
